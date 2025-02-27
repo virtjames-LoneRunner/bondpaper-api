@@ -1,5 +1,6 @@
 import time
 import RPi.GPIO as gpio
+#import lgpio as gpio
 
 # defines
 CW  = 1
