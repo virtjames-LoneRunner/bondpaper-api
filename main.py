@@ -1,4 +1,5 @@
 import RPi.GPIO as GPIO
+#import lgpio as GPIO
 import time
 from fastapi import FastAPI
 from include.config import a4_step_motors, long_step_motors
@@ -6,14 +7,16 @@ from include.dispenser import PaperDispenser
 from include.item_model import Item
 from include.coin_dispenser import CoinDispenser
 
+import uvicorn
+
 app = FastAPI()
 
-COIN_PIN = 27  # Change to your actual GPIO pin
+COIN_PIN = 12  # Change to your actual GPIO pin
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(COIN_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
 # REMOVE
-#GPIO.setwarnings(False)
+GPIO.setwarnings(False)
 
 coin_count = 0  # Global variable to store the count
 pulse_count = 0
@@ -66,7 +69,7 @@ def coin_inserted():
     print(f"Coin detected! Total: {coin_count}")
 
 # Detect falling edge (coin pulse)
-#GPIO.add_event_detect(COIN_PIN, GPIO.FALLING, callback=coin_inserted, bouncetime=100)
+GPIO.add_event_detect(COIN_PIN, GPIO.FALLING, callback=coin_inserted, bouncetime=100)
 
 
 
@@ -101,3 +104,7 @@ async def get_coin_count(item: Item):
 
 
     return {"coins": coin_count, "request": item}
+
+
+#if __name__ == "__main__":
+#    uvicorn.run(app, host="0.0.0.0", port=8000)
