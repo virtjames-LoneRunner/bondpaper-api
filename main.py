@@ -11,9 +11,9 @@ import uvicorn
 
 app = FastAPI()
 
+#GPIO.setmode(GPIO.BOARD)
 COIN_PIN = 12  # Change to your actual GPIO pin
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(COIN_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+
 
 # REMOVE
 GPIO.setwarnings(False)
@@ -40,10 +40,6 @@ def dispense_amount(amount):
             coins[value].dispense_coin(count)
             amount -= count * value
 
-def count_pulse(channel):
-    """Callback function for each pulse received."""
-    global pulse_count
-    pulse_count += 1
 
 def check_coin_slot_interrupt():
     global pulse_count
@@ -68,12 +64,15 @@ def coin_inserted():
     coin_count += check_coin_slot_interrupt()
     print(f"Coin detected! Total: {coin_count}")
 
+
+def count_pulse(channel):
+    """Callback function for each pulse received."""
+    global pulse_count
+    pulse_count += 1
+
 # Detect falling edge (coin pulse)
-GPIO.add_event_detect(COIN_PIN, GPIO.FALLING, callback=coin_inserted, bouncetime=100)
-
-
-
-
+GPIO.setup(COIN_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+GPIO.add_event_detect(COIN_PIN, GPIO.RISING, callback=count_pulse, bouncetime=10)
 
 
 # ROUTES
@@ -106,5 +105,9 @@ async def get_coin_count(item: Item):
     return {"coins": coin_count, "request": item}
 
 
-#if __name__ == "__main__":
+if __name__ == "__main__":
 #    uvicorn.run(app, host="0.0.0.0", port=8000)
+    print("STARTED")
+    while True:
+        coin_inserted()
+        time.sleep(3)

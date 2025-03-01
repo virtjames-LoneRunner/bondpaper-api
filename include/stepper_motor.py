@@ -12,6 +12,7 @@ class StepperMotor():
         self.dir_pin = config['dir_pin']
 
         gpio.setmode(gpio.BCM)
+        #gpio.setmode(gpio.BOARD)
         gpio.setup(self.pulse_pin, gpio.OUT)
         gpio.setup(self.dir_pin, gpio.OUT)
 
