@@ -2,17 +2,28 @@ import RPi.GPIO as GPIO
 #import lgpio as GPIO
 import time
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
 from include.config import a4_step_motors, long_step_motors
-from include.dispenser import PaperDispenser
+from include.dispenser_final import PaperDispenser
 from include.item_model import Item
 from include.coin_dispenser import CoinDispenser
 
 import uvicorn
 
 app = FastAPI()
+origins = ["*"]
 
-#GPIO.setmode(GPIO.BOARD)
-COIN_PIN = 12  # Change to your actual GPIO pin
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+GPIO.setmode(GPIO.BCM)
+COIN_PIN = 16  # Change to your actual GPIO pin
 
 
 # REMOVE
@@ -22,18 +33,19 @@ coin_count = 0  # Global variable to store the count
 pulse_count = 0
 
 dispensers = {
-    "A4": PaperDispenser(a4_step_motors['stepper_one'], a4_step_motors['stepper_two']),
-    "LONG": PaperDispenser(long_step_motors['stepper_one'], long_step_motors['stepper_two'])
+"A4": PaperDispenser(a4_step_motors['stepper'], a4_step_motors['dc_motor']),
+"LONG": PaperDispenser(long_step_motors['stepper'], long_step_motors['dc_motor'])
 }
 
 # Define coin dispensers for different values
 coins = {
-    10: CoinDispenser(pin=24, duration=1.0),
-    5: CoinDispenser(pin=23, duration=0.7),
-    1: CoinDispenser(pin=18, duration=0.5)
+    1: CoinDispenser(pin=8, duration=2),
+    5: CoinDispenser(pin=7, duration=2),
+    10: CoinDispenser(pin=1, duration=2),
 }
 def dispense_amount(amount):
     """Determines the number of each coin needed to match the given amount."""
+    global coins
     for value in sorted(coins.keys(), reverse=True):
         count = amount // value
         if count > 0:
@@ -63,6 +75,7 @@ def coin_inserted():
     global coin_count
     coin_count += check_coin_slot_interrupt()
     print(f"Coin detected! Total: {coin_count}")
+    return coin_count
 
 
 def count_pulse(channel):
@@ -72,13 +85,14 @@ def count_pulse(channel):
 
 # Detect falling edge (coin pulse)
 GPIO.setup(COIN_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-GPIO.add_event_detect(COIN_PIN, GPIO.RISING, callback=count_pulse, bouncetime=10)
+GPIO.add_event_detect(COIN_PIN, GPIO.RISING, callback=count_pulse, bouncetime=50)
 
 
 # ROUTES
 @app.get("/coins")
 def get_coin_count():
-    return {"coins": coin_count}
+    global coin_count
+    return {"coins": coin_inserted()}
 
 @app.post("/reset-coins")
 def reset_coins():
@@ -86,28 +100,29 @@ def reset_coins():
     coin_count = 0
     return {"message": "Coin count reset"}
 
-@app.get("/buy")
+@app.post("/buy")
 async def get_coin_count(item: Item):
     global coin_count
     change = 0
+    print("Coin count:", coin_count)
     try:
-        amount = int(change)
-        if amount > 0:
+        print("Item quantity:", item.quantity)
+        change = coin_count - item.quantity
+        if (change >= 0):
             dispensers[item.paper].dispense(item.quantity)
-            dispense_amount(amount)
+            dispense_amount(change)
             coin_count = 0
         else:
-            print("Please enter a positive amount.")
+            print("Invalid value for change")
     except ValueError:
         print("Invalid input. Please enter a valid amount.")
-
 
     return {"coins": coin_count, "request": item}
 
 
 if __name__ == "__main__":
-#    uvicorn.run(app, host="0.0.0.0", port=8000)
-    print("STARTED")
-    while True:
-        coin_inserted()
-        time.sleep(3)
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+    #print("STARTED")
+    #while True:
+    #    coin_inserted()
+    #    time.sleep(3)

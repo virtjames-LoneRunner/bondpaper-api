@@ -79,24 +79,28 @@ class PaperDispenser():
             
             self.stepper._stepper_rotate(self.stepper_steps, CW)
 
-
-n = len(sys.argv)
-if n < 4:
-    print("Usage: python3 stepper_test <stepper_one_steps> <stepper_two_steps> <number_of_papers>")
-    sys.exit()
-
-a4_step_motors['stepper']['steps'] = int(sys.argv[1])
-long_step_motors['stepper']['steps'] = int(sys.argv[2])
+        self.ramp_down()
 
 
-dispensers = {
-    "A4": PaperDispenser(a4_step_motors['stepper'], a4_step_motors['dc_motor']),
-    "LONG": PaperDispenser(long_step_motors['stepper'], long_step_motors['dc_motor'])
-}
 
-print("Dispensing", int(sys.argv[3]))
-dispensers['A4'].dispense(int(sys.argv[3]))
-dispensers['A4'].ramp_down()
-dispensers['LONG'].dispense(int(sys.argv[3]))
-dispensers['LONG'].ramp_down()
+if __name__ == "__main__":
+    n = len(sys.argv)
+    if n < 4:
+        print("Usage: python3 stepper_test <stepper_one_steps> <stepper_two_steps> <number_of_papers>")
+        sys.exit()
+
+    a4_step_motors['stepper']['steps'] = int(sys.argv[1])
+    long_step_motors['stepper']['steps'] = int(sys.argv[2])
+
+
+    dispensers = {
+        "A4": PaperDispenser(a4_step_motors['stepper'], a4_step_motors['dc_motor']),
+        "LONG": PaperDispenser(long_step_motors['stepper'], long_step_motors['dc_motor'])
+    }
+
+    print("Dispensing", int(sys.argv[3]))
+    dispensers['A4'].dispense(int(sys.argv[3]))
+    dispensers['A4'].ramp_down()
+    dispensers['LONG'].dispense(int(sys.argv[3]))
+    dispensers['LONG'].ramp_down()
 
