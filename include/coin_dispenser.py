@@ -17,16 +17,15 @@ class CoinDispenser:
     #def check_coin_dispensed(self):
     #    coin_dispensed = True
 
-    def dispense_coin(self, count):
-        """Activates the coin dispenser for a specified duration."""
+    def dispense_coin_start(self):
         GPIO.output(self.pin, GPIO.LOW)
         #while not coin_dispensed:
         #    pass
-        for i in range(count):
-            time.sleep(self.duration)
+        #for i in range(count):
+        #    time.sleep(self.duration)
 
+    def dispense_coin_end(self):
         GPIO.output(self.pin, GPIO.HIGH)
-        #coin_dispensed = False
         print(f"Coin dispensed from GPIO{self.pin}!")
 
     def cleanup(self):

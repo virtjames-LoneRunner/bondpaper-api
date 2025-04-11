@@ -1,7 +1,7 @@
 import RPi.GPIO as GPIO
 import time
 
-COIN_PIN = 37  # Change to your actual GPIO pin
+COIN_PIN = 17  # Change to your actual GPIO pin
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(COIN_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 GPIO.setwarnings(False)
@@ -13,6 +13,7 @@ def count_pulse(channel):
     """Callback function for each pulse received."""
     global pulse_count
     pulse_count += 1
+    print(pulse_count)
 
 def check_coin_slot_interrupt():
     global pulse_count
@@ -38,4 +39,10 @@ def coin_inserted():
     print(f"Coin detected! Total: {coin_count}")
 
 # Detect falling edge (coin pulse)
-GPIO.add_event_detect(COIN_PIN, GPIO.FALLING, callback=coin_inserted, bouncetime=100)
+GPIO.add_event_detect(COIN_PIN, GPIO.FALLING, callback=count_pulse, bouncetime=10)
+
+if __name__ == '__main__':
+    while True:
+        coin_inserted()
+        time.sleep(3)
+

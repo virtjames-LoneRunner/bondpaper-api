@@ -11,6 +11,7 @@ from include.coin_dispenser import CoinDispenser
 
 import uvicorn
 
+GPIO.setmode(GPIO.BCM)
 app = FastAPI()
 origins = ["*"]
 
@@ -22,8 +23,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-GPIO.setmode(GPIO.BCM)
-COIN_PIN = 16  # Change to your actual GPIO pin
+# Set Pin Numbers Here:
+COIN_PIN = 17  # Change to your actual GPIO pin
+coin_hopper_state_pin = 26 #TODO
+coin_dispensed = False
+GPIO.setup(coin_hopper_state_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+def coin_dispense_detected(channel):
+    global coin_dispensed
+    coin_dispensed = True
+    #print("CALLED")
+
+GPIO.add_event_detect(coin_hopper_state_pin, GPIO.FALLING, callback=coin_dispense_detected, bouncetime=100)
 
 
 # REMOVE
@@ -46,10 +57,17 @@ coins = {
 def dispense_amount(amount):
     """Determines the number of each coin needed to match the given amount."""
     global coins
+    global coin_dispensed
     for value in sorted(coins.keys(), reverse=True):
         count = amount // value
         if count > 0:
-            coins[value].dispense_coin(count)
+            for i in range(count):
+                coins[value].dispense_coin_start()
+                time.sleep(0.5)
+                while not coin_dispensed:
+                    pass
+                coin_dispensed = False
+                coins[value].dispense_coin_end()
             amount -= count * value
 
 
@@ -57,12 +75,14 @@ def check_coin_slot_interrupt():
     global pulse_count
     if pulse_count > 0:
         # Determine coin value based on pulse count
-        if pulse_count == 1:
+        if pulse_count == 5:
             current_coin_value = 1  # 1 Peso
-        elif pulse_count == 5:
+        elif pulse_count == 6:
             current_coin_value = 5  # 5 Pesos
-        elif pulse_count == 10:
+        elif pulse_count == 7:
             current_coin_value = 10  # 10 Pesos
+        elif pulse_count == 8:
+            current_coin_value = 20  # 20 Pesos
         else:
             current_coin_value = 0  # Unknown coin
         # Add logic here to handle the coin insertion 
@@ -82,10 +102,11 @@ def count_pulse(channel):
     """Callback function for each pulse received."""
     global pulse_count
     pulse_count += 1
+    #print(pulse_count)
 
 # Detect falling edge (coin pulse)
 GPIO.setup(COIN_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-GPIO.add_event_detect(COIN_PIN, GPIO.RISING, callback=count_pulse, bouncetime=50)
+GPIO.add_event_detect(COIN_PIN, GPIO.FALLING, callback=count_pulse, bouncetime=10)
 
 
 # ROUTES
@@ -121,8 +142,14 @@ async def get_coin_count(item: Item):
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
-    #print("STARTED")
+    #uvicorn.run(app, host="0.0.0.0", port=8000)
+    print("STARTED")
+    while True:
+        #pass
+        coin_inserted()
+        time.sleep(5)
+
+    #dispense_amount(5)
     #while True:
-    #    coin_inserted()
-    #    time.sleep(3)
+    #    print("VALUE:", GPIO.input(coin_hopper_state_pin))
+
