@@ -18,6 +18,7 @@ class StepperMotor():
         gpio.setup(self.dir_pin, gpio.OUT)
 
     def _stepper_rotate(self, steps, direction, delay=0.001):
+        gpio.setup(self.dir_pin, gpio.OUT)
         gpio.output(self.dir_pin, gpio.HIGH if direction else gpio.LOW)
         for _ in range(steps):
             #print("step")

@@ -3,7 +3,7 @@ import time
 
 COIN_PIN = 17  # Change to your actual GPIO pin
 GPIO.setmode(GPIO.BCM)
-GPIO.setup(COIN_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+GPIO.setup(COIN_PIN, GPIO.IN)
 GPIO.setwarnings(False)
 
 coin_count = 0  # Global variable to store the count
@@ -43,6 +43,7 @@ GPIO.add_event_detect(COIN_PIN, GPIO.FALLING, callback=count_pulse, bouncetime=1
 
 if __name__ == '__main__':
     while True:
-        coin_inserted()
-        time.sleep(3)
+        pass
+    #    coin_inserted()
+    #    time.sleep(1)
 

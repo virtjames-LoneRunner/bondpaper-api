@@ -63,7 +63,7 @@ def dispense_amount(amount):
         if count > 0:
             for i in range(count):
                 coins[value].dispense_coin_start()
-                time.sleep(0.5)
+                time.sleep(0.1)
                 while not coin_dispensed:
                     pass
                 coin_dispensed = False
@@ -94,7 +94,7 @@ def check_coin_slot_interrupt():
 def coin_inserted():
     global coin_count
     coin_count += check_coin_slot_interrupt()
-    print(f"Coin detected! Total: {coin_count}")
+    #print(f"Coin detected! Total: {coin_count}")
     return coin_count
 
 
@@ -102,11 +102,11 @@ def count_pulse(channel):
     """Callback function for each pulse received."""
     global pulse_count
     pulse_count += 1
-    #print(pulse_count)
+    print(pulse_count)
 
 # Detect falling edge (coin pulse)
 GPIO.setup(COIN_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-GPIO.add_event_detect(COIN_PIN, GPIO.FALLING, callback=count_pulse, bouncetime=10)
+GPIO.add_event_detect(COIN_PIN, GPIO.FALLING, callback=count_pulse, bouncetime=5)
 
 
 # ROUTES
@@ -142,12 +142,13 @@ async def get_coin_count(item: Item):
 
 
 if __name__ == "__main__":
-    #uvicorn.run(app, host="0.0.0.0", port=8000)
-    print("STARTED")
-    while True:
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+    #dispensers["A4"].dispense(1)
+    #print("STARTED")
+    #while True:
         #pass
-        coin_inserted()
-        time.sleep(5)
+        #coin_inserted()
+        #time.sleep(5)
 
     #dispense_amount(5)
     #while True:
