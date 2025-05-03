@@ -11,6 +11,11 @@ from include.coin_dispenser import CoinDispenser
 
 import uvicorn
 
+# for connecting to Arduino Coinslot
+import serial
+
+ser = serial.Serial('/dev/ttyACM0', 9600)
+
 GPIO.setmode(GPIO.BCM)
 app = FastAPI()
 origins = ["*"]
@@ -27,7 +32,7 @@ app.add_middleware(
 COIN_PIN = 17  # Change to your actual GPIO pin
 coin_hopper_state_pin = 26 #TODO
 coin_dispensed = False
-GPIO.setup(coin_hopper_state_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.setup(coin_hopper_state_pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
 def coin_dispense_detected(channel):
     global coin_dispensed
@@ -93,7 +98,14 @@ def check_coin_slot_interrupt():
     
 def coin_inserted():
     global coin_count
-    coin_count += check_coin_slot_interrupt()
+
+    # read serial line
+    ser.write('get\n'.encode())
+    coinslot_return = ser.readline().decode('utf-8').strip()
+
+    print('RETURNED VALUE', coinslot_return)
+
+    #coin_count += check_coin_slot_interrupt()
     #print(f"Coin detected! Total: {coin_count}")
     return coin_count
 
@@ -142,14 +154,13 @@ async def get_coin_count(item: Item):
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
-    #dispensers["A4"].dispense(1)
-    #print("STARTED")
-    #while True:
-        #pass
-        #coin_inserted()
-        #time.sleep(5)
+    #uvicorn.run(app, host="0.0.0.0", port=8000)
+    time.sleep(2)
+    while True:
+        coin_inserted()
+        time.sleep(1)
 
+    #dispensers["A4"].dispense(1)
     #dispense_amount(5)
     #while True:
     #    print("VALUE:", GPIO.input(coin_hopper_state_pin))
