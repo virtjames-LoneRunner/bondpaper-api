@@ -35,4 +35,5 @@ def main():
 
     ser.close()
 
-if __name__ == '__main
+if __name__ == '__main':
+    main()
